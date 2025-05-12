@@ -28,6 +28,7 @@
       width: 100%;
       padding: 10px;
       margin-top: 8px;
+      margin-bottom: 10px;
       border-radius: 6px;
       border: 1px solid #555;
       background-color: #3c3c3c;
@@ -38,7 +39,6 @@
     .time-inputs {
       display: flex;
       gap: 15px;
-      margin-top: 8px;
     }
 
     .time-inputs input {
@@ -80,7 +80,7 @@
 
   <label>Weapon:
     <select id="weapon">
-      <option value="0.9">Kynosian Bow (0.9s)</option>
+      <option value="1">Kynosian Bow (1s)</option>
       <option value="0.8">Kynosian Bow (E3) (0.8s)</option>
     </select>
   </label>
@@ -100,6 +100,23 @@
       <option value="speed">Ring of Speed</option>
       <option value="berserker">Eternal Berserker Ring</option>
       <option value="soul">Ring of Soul</option>
+      <option value="secret">Ring of Secret</option>
+    </select>
+  </label>
+
+  <label>Blessing:
+    <select id="blessing">
+      <option value="none">None</option>
+      <option value="death80">Death Princess Rune (80%)</option>
+      <option value="death85">Death Princess Rune (E) (85%)</option>
+    </select>
+  </label>
+
+  <label>Basecamp Level:
+    <select id="basecamp">
+      <option value="59">Basecamp 59 and below</option>
+      <option value="66">Basecamp 66 to 68</option>
+      <option value="69">Basecamp 69+</option>
     </select>
   </label>
 
@@ -187,21 +204,33 @@
         const cape = document.getElementById("cape").value;
         const wish = document.getElementById("wish").value;
         const task = document.getElementById("task").value;
-        const hits = parseInt(document.getElementById("hitsInput").value);
+        const hitsRaw = parseInt(document.getElementById("hitsInput").value);
         const mode = document.getElementById("mode").value;
+        const basecamp = parseInt(document.getElementById("basecamp").value);
+        const blessing = document.getElementById("blessing").value;
+
+        let hits = hitsRaw;
+        if (hits >= 2) {
+          if (blessing === "death80") hits -= 0.8;
+          if (blessing === "death85") hits -= 0.85;
+          hits = Math.max(1, hits);
+        }
 
         let baseAttack = weaponSpeed;
-        if (["cognium", "speed", "berserker", "soul"].includes(ring)) baseAttack /= 2;
+        if (["cognium", "speed", "berserker", "soul", "secret"].includes(ring)) baseAttack /= 2;
 
         let respawnTime = 0.18;
         if (cape === "cognium") respawnTime *= 0.5;
-        if (ring === "cognium") respawnTime *= 0.5;
+        if (["cognium", "secret"].includes(ring)) respawnTime *= 0.5;
+        if (basecamp >= 66 && basecamp <= 68) respawnTime *= 0.8;
 
-        const mobKillTime = Math.max(baseAttack * hits, respawnTime);
-        const { mobs, kc } = taskData[task];
+        let { mobs, kc } = taskData[task];
+        if (basecamp >= 69) mobs = Math.ceil(mobs * 0.8);
+
         let kcPerTask = wish === "max" ? kc.max : kc.no;
         if (cape === "slayer") kcPerTask *= 2;
 
+        const mobKillTime = Math.max(baseAttack * hits, respawnTime);
         const taskTime = mobs * mobKillTime;
 
         let result = "";
@@ -249,7 +278,7 @@
         document.getElementById("results").innerText = result;
       });
 
-      updateModeInputs(); // initialize correct inputs
+      updateModeInputs();
     });
   </script>
 
