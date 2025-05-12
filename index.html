@@ -106,9 +106,9 @@
 
   <label>Blessing:
     <select id="blessing">
-      <option value="none">None</option>
-      <option value="death80">Death Princess Rune (80%)</option>
-      <option value="death85">Death Princess Rune (E) (85%)</option>
+      <option value=0>None</option>
+      <option value=80>Death Princess Rune (80%)</option>
+      <option value=85>Death Princess Rune (E) (85%)</option>
     </select>
   </label>
 
@@ -212,18 +212,11 @@
         const cape = document.getElementById("cape").value;
         const wish = document.getElementById("wish").value;
         const task = document.getElementById("task").value;
-        const hitsRaw = parseInt(document.getElementById("hitsInput").value);
+        const hits = parseInt(document.getElementById("hitsInput").value);
         const mode = document.getElementById("mode").value;
         const basecamp = parseInt(document.getElementById("basecamp").value);
         const fastcombat = document.getElementById("fastcombat").value === "true"
-        const blessing = document.getElementById("blessing").value;
-
-        let hits = hitsRaw;
-        if (hits >= 2) {
-          if (blessing === "death80") hits -= 0.8;
-          if (blessing === "death85") hits -= 0.85;
-          hits = Math.max(1, hits);
-        }
+        const blessing = parseInt(document.getElementById("blessing").value);
 
         let attackSpeed = weaponSpeed;
         if (["cognium", "speed", "berserker", "soul", "secret"].includes(ring)) attackSpeed *= 0.5;
@@ -240,9 +233,23 @@
 
         let kcPerTask = wish === "max" ? kc.max : kc.no;
         if (cape === "slayer") kcPerTask *= 2;
+        
+        let mobKillTime = 0;
+        let taskTime = 0;
+        if ([80, 85].includes(blessing)) {
+          mobKillTime = attackSpeed * hits + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const successDPR = taskTime * blessing / 100;
 
-        const mobKillTime = attackSpeed * hits + respawnTime;
-        const taskTime = mobs * mobKillTime;
+          mobKillTime = attackSpeed * (hits + 1) + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const failureDPR = taskTime * (100-blessing) / 100;
+
+          taskTime = successDPR + failureDPR;
+        } else {
+          mobKillTime = attackSpeed * hits + respawnTime;
+          taskTime = mobs * mobKillTime;
+        }
 
         let result = "";
         if (mode === "time") {
