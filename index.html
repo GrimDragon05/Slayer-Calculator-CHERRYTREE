@@ -106,17 +106,25 @@
 
   <label>Blessing:
     <select id="blessing">
-      <option value="none">None</option>
-      <option value="death80">Death Princess Rune (80%)</option>
-      <option value="death85">Death Princess Rune (E) (85%)</option>
+      <option value=0>None</option>
+      <option value=80>Death Princess Rune (80%)</option>
+      <option value=85>Death Princess Rune (E) (85%)</option>
     </select>
   </label>
 
   <label>Basecamp Level:
     <select id="basecamp">
-      <option value="59">Basecamp 59 and below</option>
-      <option value="66">Basecamp 66 to 68</option>
-      <option value="69">Basecamp 69+</option>
+      <option value=59>Basecamp 1 - 59</option>
+      <option value=60>Basecamp 60 - 65</option>
+      <option value=66>Basecamp 66 - 68</option>
+      <option value=69>Basecamp 69 - 75</option>
+    </select>
+  </label>
+
+  <label>Fast Combat:
+    <select id="fastcombat">
+      <option value="true">True</option>
+      <option value="false">False</option>
     </select>
   </label>
 
@@ -178,15 +186,15 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const taskData = {
-        blade:  { mobs: 5, kc: { no: 1, max: 3 } },
-        tracer: { mobs: 8, kc: { no: 3, max: 10 } },
+        blade:  { mobs: 5, kc: { no: 1, max: 3.5 } },
+        tracer: { mobs: 8, kc: { no: 3, max: 10.5 } },
         crux:   { mobs: 18, kc: { no: 6, max: 21 } },
         tide:   { mobs: 20, kc: { no: 10, max: 35 } },
         quill:  { mobs: 32, kc: { no: 18, max: 63 } },
         lumen:  { mobs: 48, kc: { no: 32, max: 112 } },
         vain:   { mobs: 72, kc: { no: 54, max: 189 } },
-        feroxi: { mobs: 80, kc: { no: 75, max: 262 } },
-        adamet: { mobs: 96, kc: { no: 125, max: 437 } }
+        feroxi: { mobs: 80, kc: { no: 75, max: 262.5 } },
+        adamet: { mobs: 96, kc: { no: 125, max: 437.5 } }
       };
 
       const updateModeInputs = () => {
@@ -204,34 +212,44 @@
         const cape = document.getElementById("cape").value;
         const wish = document.getElementById("wish").value;
         const task = document.getElementById("task").value;
-        const hitsRaw = parseInt(document.getElementById("hitsInput").value);
+        const hits = parseInt(document.getElementById("hitsInput").value);
         const mode = document.getElementById("mode").value;
         const basecamp = parseInt(document.getElementById("basecamp").value);
-        const blessing = document.getElementById("blessing").value;
+        const fastcombat = document.getElementById("fastcombat").value === "true"
+        const blessing = parseInt(document.getElementById("blessing").value);
 
-        let hits = hitsRaw;
-        if (hits >= 2) {
-          if (blessing === "death80") hits -= 0.8;
-          if (blessing === "death85") hits -= 0.85;
-          hits = Math.max(1, hits);
-        }
+        let attackSpeed = weaponSpeed;
+        if (["cognium", "speed", "berserker", "soul", "secret"].includes(ring)) attackSpeed *= 0.5;
+        if (basecamp >= 60) attackSpeed *= 0.8
 
-        let baseAttack = weaponSpeed;
-        if (["cognium", "speed", "berserker", "soul", "secret"].includes(ring)) baseAttack /= 2;
-
-        let respawnTime = 0.18;
+        let respawnTime = 1.8;
+        if (fastcombat) respawnTime *= 0.5
         if (cape === "cognium") respawnTime *= 0.5;
         if (["cognium", "secret"].includes(ring)) respawnTime *= 0.5;
-        if (basecamp >= 66 && basecamp <= 68) respawnTime *= 0.8;
+        if (basecamp >= 66) respawnTime *= 0.8;
 
         let { mobs, kc } = taskData[task];
         if (basecamp >= 69) mobs = Math.ceil(mobs * 0.8);
 
         let kcPerTask = wish === "max" ? kc.max : kc.no;
         if (cape === "slayer") kcPerTask *= 2;
+        
+        let mobKillTime = 0;
+        let taskTime = 0;
+        if ([80, 85].includes(blessing)) {
+          mobKillTime = attackSpeed * hits + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const successDPR = taskTime * blessing / 100;
 
-        const mobKillTime = Math.max(baseAttack * hits, respawnTime);
-        const taskTime = mobs * mobKillTime;
+          mobKillTime = attackSpeed * (hits + 1) + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const failureDPR = taskTime * (100-blessing) / 100;
+
+          taskTime = successDPR + failureDPR;
+        } else {
+          mobKillTime = attackSpeed * hits + respawnTime;
+          taskTime = mobs * mobKillTime;
+        }
 
         let result = "";
         if (mode === "time") {
