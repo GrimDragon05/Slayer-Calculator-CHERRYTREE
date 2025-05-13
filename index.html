@@ -277,10 +277,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (best) {
+        const totalSeconds = Math.round(best.totalTime);
+        const days = Math.floor(totalSeconds / (24 * 3600));
+        const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
         result += `Best Task: ${best.task.charAt(0).toUpperCase() + best.task.slice(1)}\n`;
         result += `- Tasks Needed: ${best.tasksNeeded}\n`;
         result += `- Approx. Killcoins per Task: ${best.kcPerTask}\n`;
-        result += `- Estimated Time: ~${Math.round(best.totalTime / 60)} minutes`;
+        result += `- Estimated Time: ~${days}d ${hours}h ${minutes}m ${seconds}s`;
       } else {
         result = "No viable task found.";
       }
