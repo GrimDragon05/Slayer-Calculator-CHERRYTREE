@@ -225,12 +225,6 @@
         const mode = document.getElementById("mode").value;
         const taskKey = document.getElementById("task").value;
 
-        let hits = hitsRaw;
-        if (hits >= 2 && blessing > 0) {
-          hits -= hits * (blessing / 100);
-          hits = Math.max(1, hits);
-        }
-
         let attackSpeed = weaponSpeed;
         if (["cognium", "speed", "berserker", "soul", "secret"].includes(ring)) attackSpeed *= 0.5;
         if (basecamp >= 60) attackSpeed *= 0.8;
@@ -240,14 +234,30 @@
         if (cape === "cognium") respawnTime *= 0.5;
         if (["cognium", "secret"].includes(ring)) respawnTime *= 0.5;
         if (basecamp >= 66) respawnTime *= 0.8;
-
-        const mobKillTime = attackSpeed * hits + respawnTime;
+        
         const task = taskData[taskKey];
         let mobs = task.mobs;
         if (basecamp >= 69) mobs = Math.ceil(mobs * 0.8);
+
+        let mobKillTime = 0;
+        let taskTime = 0;
+        if ([80, 85].includes(blessing)) {
+          mobKillTime = attackSpeed * hitsRaw + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const successDPR = taskTime * blessing / 100;
+
+          mobKillTime = attackSpeed * (hitsRaw + 1) + respawnTime;
+          taskTime = mobs * mobKillTime;
+          const failureDPR = taskTime * (100-blessing) / 100;
+
+          taskTime = successDPR + failureDPR;
+        } else {
+          mobKillTime = attackSpeed * hitsRaw + respawnTime;
+          taskTime = mobs * mobKillTime;
+        }
+        
         let kcPerTask = wish === "max" ? task.kc.max : task.kc.no;
         if (cape === "slayer") kcPerTask *= 2;
-        const taskTime = mobs * mobKillTime;
 
         let result = "";
 
